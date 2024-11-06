@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$DIR/.." || exit 1
+
+TEMP_DIR=$(mktemp -d)
+ZIP_URL="https://github.com/github/copilot.vim/archive/refs/heads/release.zip"
+ZIP_FILE="$TEMP_DIR/copilot-vim-release.zip"
+
+curl -L -o "$ZIP_FILE" "$ZIP_URL"
+echo "downloaded to: $ZIP_FILE"
+
+unzip "$ZIP_FILE" -d "$TEMP_DIR"
+echo "extracted zip to: $TEMP_DIR"
+
+REPO_DIR="$TEMP_DIR/copilot.vim-release"
+DIST_DIR="$REPO_DIR/dist"
+DEST_DIR="./src/copilot-vim-dist"
+
+rm -rf "$DEST_DIR"
+mkdir -p "$DEST_DIR"
+
+if [ -d "$DIST_DIR" ]; then
+  cp -r "$DIST_DIR/." "$DEST_DIR"
+  echo "copied 'dist' folder to $DEST_DIR"
+else
+  echo "'dist' folder does not exist in the extracted content. Exiting."
+  exit 1
+fi
+
+rm -rf "$TEMP_DIR"
+echo "done!"
+

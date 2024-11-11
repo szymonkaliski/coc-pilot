@@ -5,6 +5,8 @@ import {
   CompletionItem,
   CompletionItemKind,
   CompletionTriggerKind,
+  commands,
+  window,
 } from "coc.nvim";
 import { sendNotification, sendRequest } from "./copilot";
 
@@ -14,6 +16,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
   });
 
   sendNotification("initialized", {});
+
+  const status = await sendRequest("checkStatus", {});
+
+  if (!status.user) {
+    window.showWarningMessage(
+      `coc-pilot is not authenticated, run 'coc-pilot.signIn'!`
+    );
+  }
 
   workspace.document.then((document) => {
     sendNotification("textDocument/didOpen", {
@@ -70,8 +80,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
         return result.items.map((c) => {
           return {
-            // hack to sort on top of the list
-            sortText: " " + c.insertText,
+            // three spaces - hack to sort on top of the list
+            sortText: "   " + c.insertText,
             label: c.insertText.split("\n")[0],
             detail: c.insertText,
             kind: CompletionItemKind.Snippet,
@@ -82,11 +92,65 @@ export async function activate(context: ExtensionContext): Promise<void> {
           };
         });
       },
-    })
+    }),
 
-    // TODO: sign-in flow using a command
-    // commands.registerCommand('coc-pilot.Command', async () => {
-    //   window.showInformationMessage('coc-pilot Commands works!');
-    // }),
+    commands.registerCommand("coc-pilot.signIn", async () => {
+      const status = await sendRequest("checkStatus", {});
+      if (status.user) {
+        window.showInformationMessage(
+          "coc-pilot is already signed in as: " + status.user
+        );
+        return;
+      }
+
+      const data = await sendRequest("signInInitiate", {});
+
+      await window.showDialog({
+        content: `
+Open ${data.verificationUri} in the browser and authenticate with \`${data.userCode}\` one-time code, confirm once ready.
+        `,
+
+        buttons: [
+          {
+            index: 0,
+            text: "Authenticated in the browser",
+          },
+          {
+            index: 1,
+            text: "Cancel",
+          },
+        ],
+
+        callback: async (idx) => {
+          if (idx === 1) {
+            return;
+          }
+
+          window.showInformationMessage("coc-pilot checking sign in status...");
+
+          const request = await sendRequest("signInConfirm", {
+            userCode: data.userCode,
+          });
+
+          if (request.status === "error") {
+            window.showErrorMessage(
+              "coc-pilot sign in failed: " + request.error
+            );
+            return;
+          }
+
+          const status = await sendRequest("checkStatus", {});
+
+          window.showInformationMessage(
+            "coc-pilot signed in as: " + status.user
+          );
+        },
+      });
+    }),
+
+    commands.registerCommand("coc-pilot.signOut", async () => {
+      await sendRequest("signOut", {});
+      window.showInformationMessage("coc-pilot signed out");
+    })
   );
 }

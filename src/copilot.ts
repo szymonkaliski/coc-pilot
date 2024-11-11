@@ -1,3 +1,5 @@
+// adapted from https://stackoverflow.com/questions/76741410/how-to-invoke-github-copilot-programmatically
+
 import { spawn, ChildProcess } from "child_process";
 import path from "path";
 
@@ -14,6 +16,7 @@ export const sendMessage = (data: object): void => {
   const dataString = JSON.stringify({ ...data, jsonrpc: "2.0" });
   const contentLength = Buffer.byteLength(dataString, "utf8");
   const rpcString = `Content-Length: ${contentLength}\r\n\r\n${dataString}`;
+
   server.stdin?.write(rpcString);
 };
 
@@ -22,6 +25,7 @@ export const sendRequest = (
   params: object
 ): Promise<object> => {
   sendMessage({ id: ++requestId, method, params });
+
   return new Promise((resolve, reject) => {
     resolveMap.set(requestId, resolve);
     rejectMap.set(requestId, reject);
@@ -36,12 +40,14 @@ const handleReceivedPayload = (payload: Record<string, unknown>): void => {
   if ("id" in payload) {
     if ("result" in payload) {
       const resolve = resolveMap.get(payload.id as number);
+
       if (resolve) {
         resolve(payload.result as object);
         resolveMap.delete(payload.id as number);
       }
     } else if ("error" in payload) {
       const reject = rejectMap.get(payload.id as number);
+
       if (reject) {
         reject(payload.error as object);
         rejectMap.delete(payload.id as number);
@@ -58,12 +64,14 @@ server.stdout?.on("data", (data: Buffer) => {
 
   for (const payloadString of payloadStrings) {
     let payload: Record<string, unknown>;
+
     try {
       payload = JSON.parse(payloadString);
     } catch (e) {
       console.error(`Unable to parse payload: ${payloadString}`, e);
       continue;
     }
+
     handleReceivedPayload(payload);
   }
 });

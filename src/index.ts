@@ -83,7 +83,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
             // three spaces - hack to sort on top of the list
             sortText: "   " + c.insertText,
             label: c.insertText.split("\n")[0],
-            detail: c.insertText,
+            // detail is only necessary for multi-line completions
+            detail: c.insertText.includes("\n") ? c.insertText : undefined,
             kind: CompletionItemKind.Snippet,
             textEdit: {
               range: c.range,
@@ -106,9 +107,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
       const data = await sendRequest("signInInitiate", {});
 
       await window.showDialog({
-        content: `
-Open ${data.verificationUri} in the browser and authenticate with \`${data.userCode}\` one-time code, confirm once ready.
-        `,
+        content: `Open ${data.verificationUri} in the browser and authenticate with \`${data.userCode}\` one-time code, confirm here once ready.`,
 
         buttons: [
           {
@@ -140,7 +139,6 @@ Open ${data.verificationUri} in the browser and authenticate with \`${data.userC
           }
 
           const status = await sendRequest("checkStatus", {});
-
           window.showInformationMessage(
             "coc-pilot signed in as: " + status.user
           );

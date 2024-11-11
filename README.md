@@ -1,15 +1,17 @@
 # coc-pilot
 
+I just wanted copilot suggestion in the tab-completion menu for `coc.nvim`.
+This plugin achieves just that, by running its own little "proxy" over the copilot LSP.
+
+It will definitely clash with `copilot.vim`.
+
 ## Install
 
 `:CocInstall coc-pilot`
 
-## Notes
+## Setup
 
-- https://github.com/github/copilot.vim
-- https://github.com/ubermanu/copilot
-- https://github.com/zbirenbaum/copilot.lua
-- https://stackoverflow.com/questions/76741410/how-to-invoke-github-copilot-programmatically
+`:CocCommand coc-pilot.signIn` on first run.
 
 ## License
 

@@ -1,12 +1,12 @@
 // adapted from https://stackoverflow.com/questions/76741410/how-to-invoke-github-copilot-programmatically
 
-import { spawn, ChildProcess } from "child_process";
+import { fork } from "child_process";
 import path from "path";
 
-const server: ChildProcess = spawn("node", [
+const server = fork(
   path.join(__dirname, "../src/copilot-vim-dist/language-server.js"),
-  "--stdio",
-]);
+  { silent: true }
+);
 
 let requestId = 0;
 const resolveMap = new Map<number, (payload: object) => void | Promise<void>>();

@@ -3,6 +3,10 @@
 I just wanted copilot suggestion in the tab-completion menu for `coc.nvim`.
 This plugin achieves just that, by running its own little "proxy" over the copilot LSP.
 
+Looks like this:
+
+![Screenshot of coc-pilot](./assets/screenshot.png)
+
 It will definitely clash with `copilot.vim`.
 
 ## Install
